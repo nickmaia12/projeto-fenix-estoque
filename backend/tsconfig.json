@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
     /* Configurações de Ambiente */
+    "isolatedModules": true,
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
-    "types": ["node"],
+    "types": ["node","jest"],
+    
 
     /* Caminhos do Projeto */
     "rootDir": "./src",

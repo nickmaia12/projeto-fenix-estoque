@@ -1,4 +1,4 @@
-import { Item } from "../models/Item";
+import { Item } from "../models/Item.js";
 import { v4 as uuid } from "uuid";
 
 class ItemService {
