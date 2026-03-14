@@ -18,4 +18,11 @@ describe('ItemService',()=>{
 
         expect(item1.id).not.toBe(item2.id)
     })
+
+    it('nao deve permitir a criacao de um item com quantidade negativa', () => {
+    // Nós envolvemos a chamada em uma função para o Jest conseguir "capturar" o erro
+    expect(() => {
+        itemService.create('RTX 5090', -1, 'Hardware');
+    }).toThrow("a quantidade nao pode ser negativa"); 
+});
 })

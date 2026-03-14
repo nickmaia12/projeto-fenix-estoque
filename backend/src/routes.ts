@@ -1,11 +1,10 @@
 import {Router} from 'express'
-import { itemController } from './controllers/ItemController'
+import { itemController } from './controllers/ItemController.js'
 
 const routes = Router()
 
-routes.get('/items',itemController.index)
-
-routes.post('items',itemController.index)
+routes.post("/items", itemController.store);
+routes.get("/items", itemController.listAll)
 
 export {routes}
 

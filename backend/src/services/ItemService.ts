@@ -9,6 +9,7 @@ class ItemService {
   }
 
   create(nome: string, quantidade: number, categoria: string) {
+    
     const newItem: Item = {
       id: uuid(),
       nome,
