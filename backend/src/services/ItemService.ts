@@ -9,6 +9,9 @@ class ItemService {
   }
 
   create(nome: string, quantidade: number, categoria: string) {
+    if(quantidade < 0) {
+      throw new Error("a quantidade nao pode ser negativa")
+    }
     
     const newItem: Item = {
       id: uuid(),
