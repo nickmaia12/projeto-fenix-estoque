@@ -4,7 +4,8 @@ import { itemController } from './controllers/ItemController.js'
 const routes = Router()
 
 routes.post("/items", itemController.store);
-routes.get("/items", itemController.listAll)
+routes.get("/items", itemController.listAll); 
+routes.delete("/items/:id", itemController.remove);
 
 export {routes}
 

@@ -23,5 +23,13 @@ class ItemService {
     this.items.push(newItem);
     return newItem;
   }
+  delete(id: string): boolean {
+    const index = this.items.findIndex(item => item.id === id);
+    if(index !== -1){
+      this.items.splice(index ,1)
+      return true
+    }
+    return false
+  }
 }
 export const itemService = new ItemService();
