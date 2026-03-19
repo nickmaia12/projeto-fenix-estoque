@@ -31,5 +31,15 @@ class ItemService {
     }
     return false
   }
+
+  update(id:string,data:Partial<Item>): Item | null{
+    const item = this.items.find(item => item.id === id)
+    if(!item) {
+      return null
+    }
+    Object.assign(item,data)
+    return item
+  }
+
 }
 export const itemService = new ItemService();
