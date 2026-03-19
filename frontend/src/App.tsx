@@ -1,120 +1,136 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState, type FormEvent } from 'react' // Adicionei o 'type' aqui
+import api from "./services/api" 
 import './App.css'
 
+// O "Contrato" do nosso item de Marte
+interface Item {
+  id: string;
+  nome: string;
+  quantidade: number;
+  categoria: string;
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  // Estados para a lista e para o formulário
+  const [items, setItems] = useState<Item[]>([]);
+  const [nome, setNome] = useState('');
+  const [quantidade, setQuantidade] = useState<number>(0);
+  const [categoria, setCategoria] = useState('');
+
+  // 🛰️ 1. Buscar itens do Backend (GET)
+  async function fetchItems() {
+    try {
+      const response = await api.get('/items');
+      setItems(response.data);
+    } catch (error) {
+      console.error("Erro ao conectar com a base:", error);
+      alert("Erro ao carregar inventário. O backend está rodando?");
+    }
+  }
+
+  // 🚀 2. Adicionar novo item (POST)
+  async function handleAddItem(e: FormEvent) {
+    e.preventDefault(); // Impede a página de recarregar
+
+    if (!nome || !categoria || quantidade <= 0) {
+      alert("Preencha todos os campos corretamente!");
+      return;
+    }
+
+    try {
+      const response = await api.post('/items', {
+        nome,
+        quantidade,
+        categoria
+      });
+
+      // Atualiza a lista local com o novo item que o backend retornou
+      setItems([...items, response.data]);
+      
+      // Limpa o formulário
+      setNome('');
+      setQuantidade(0);
+      setCategoria('');
+    } catch (error) {
+      console.error("Erro ao cadastrar item:", error);
+    }
+  }
+
+  // 💥 3. Remover item (DELETE)
+  async function handleDeleteItem(id: string) {
+    try {
+      await api.delete(`/items/${id}`);
+      // Remove da tela sem precisar dar F5
+      setItems(items.filter(item => item.id !== id));
+    } catch (error) {
+      console.error("Erro ao deletar:", error);
+    }
+  }
+
+  // Roda uma vez quando o App abre
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <div className="container">
+      <header>
+        <h1>🛰️ Projeto Fênix: Estoque Orbital</h1>
+        <p>Monitoramento de Suprimentos em Tempo Real</p>
+      </header>
+
+      {/* Formulário de Cadastro */}
+      <section className="form-section">
+        <h2>Novo Item</h2>
+        <form onSubmit={handleAddItem}>
+          <input 
+            type="text" 
+            placeholder="Nome do item (ex: Oxigênio)" 
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
+          <input 
+            type="number" 
+            placeholder="Quantidade" 
+            value={quantidade}
+            onChange={(e) => setQuantidade(Number(e.target.value))}
+          />
+          <input 
+            type="text" 
+            placeholder="Categoria" 
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+          />
+          <button type="submit">Cadastrar no Sistema</button>
+        </form>
       </section>
 
-      <div className="ticks"></div>
+      <hr />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
+      {/* Listagem do Inventário */}
+      <section className="inventory-section">
+        <h2>Inventário Atual</h2>
+        <div className="item-grid">
+          {items.length === 0 ? (
+            <p>Nenhum item detectado no radar.</p>
+          ) : (
+            items.map(item => (
+              <div key={item.id} className="item-card">
+                <h3>{item.nome}</h3>
+                <p>Quantidade: <strong>{item.quantidade}</strong></p>
+                <p>Categoria: <em>{item.categoria}</em></p>
+                <button 
+                  className="delete-btn"
+                  onClick={() => handleDeleteItem(item.id)}
                 >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+                  Remover
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </div>
   )
 }
 
