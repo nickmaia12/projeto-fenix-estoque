@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react' // Adicionei o 'type' aqui
-import api from "./services/api" 
-import './App.css'
+import { useEffect, useState, type FormEvent } from "react";
+import api from "./services/api";
+import "./App.css";
 
 // O "Contrato" do nosso item de Marte
 interface Item {
@@ -13,24 +13,25 @@ interface Item {
 function App() {
   // Estados para a lista e para o formulário
   const [items, setItems] = useState<Item[]>([]);
-  const [nome, setNome] = useState('');
+  const [nome, setNome] = useState("");
   const [quantidade, setQuantidade] = useState<number>(0);
-  const [categoria, setCategoria] = useState('');
+  const [categoria, setCategoria] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // 🛰️ 1. Buscar itens do Backend (GET)
   async function fetchItems() {
     try {
-      const response = await api.get('/items');
+      const response = await api.get("/items");
       setItems(response.data);
     } catch (error) {
       console.error("Erro ao conectar com a base:", error);
       alert("Erro ao carregar inventário. O backend está rodando?");
     }
-  }
+  } // <--- ESSA CHAVE ESTAVA FALTANDO AQUI!
 
-  // 🚀 2. Adicionar novo item (POST)
+  // 🚀 2. Enviar formulário (POST ou PUT)
   async function handleAddItem(e: FormEvent) {
-    e.preventDefault(); // Impede a página de recarregar
+    e.preventDefault();
 
     if (!nome || !categoria || quantidade <= 0) {
       alert("Preencha todos os campos corretamente!");
@@ -38,21 +39,34 @@ function App() {
     }
 
     try {
-      const response = await api.post('/items', {
-        nome,
-        quantidade,
-        categoria
-      });
+      if (editingId) {
+        // Modo Edição (PUT)
+        await api.put(`/items/${editingId}`, {
+          nome,
+          quantidade,
+          categoria,
+        });
 
-      // Atualiza a lista local com o novo item que o backend retornou
-      setItems([...items, response.data]);
-      
-      // Limpa o formulário
-      setNome('');
+        await fetchItems();
+        setEditingId(null);
+        alert("Item atualizado com sucesso!");
+      } else {
+        // Modo Cadastro (POST)
+        const response = await api.post("/items", {
+          nome,
+          quantidade,
+          categoria,
+        });
+        setItems([...items, response.data]);
+      }
+
+      // Limpa os campos
+      setNome("");
       setQuantidade(0);
-      setCategoria('');
+      setCategoria("");
     } catch (error) {
-      console.error("Erro ao cadastrar item:", error);
+      console.error("Erro na operação orbital:", error);
+      alert("Ocorreu um erro ao processar a requisição.");
     }
   }
 
@@ -60,11 +74,18 @@ function App() {
   async function handleDeleteItem(id: string) {
     try {
       await api.delete(`/items/${id}`);
-      // Remove da tela sem precisar dar F5
-      setItems(items.filter(item => item.id !== id));
+      setItems(items.filter((item) => item.id !== id));
     } catch (error) {
       console.error("Erro ao deletar:", error);
     }
+  }
+
+  // 📝 4. Preparar edição
+  function handleEditClick(item: Item) {
+    setEditingId(item.id);
+    setNome(item.nome);
+    setQuantidade(item.quantidade);
+    setCategoria(item.categoria);
   }
 
   // Roda uma vez quando o App abre
@@ -81,27 +102,29 @@ function App() {
 
       {/* Formulário de Cadastro */}
       <section className="form-section">
-        <h2>Novo Item</h2>
+        <h2>{editingId ? "Editando Item" : "Novo Item"}</h2>
         <form onSubmit={handleAddItem}>
-          <input 
-            type="text" 
-            placeholder="Nome do item (ex: Oxigênio)" 
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
+          <input
+            type="text"
+            placeholder="Nome do item"
+            value={nome} // <-- Isso aqui faz o texto aparecer quando você clica em Editar
+            onChange={(e) => setNome(e.target.value)} // <-- Isso aqui deixa você digitar
           />
-          <input 
-            type="number" 
-            placeholder="Quantidade" 
+          <input
+            type="number"
+            placeholder="Quantidade"
             value={quantidade}
             onChange={(e) => setQuantidade(Number(e.target.value))}
           />
-          <input 
-            type="text" 
-            placeholder="Categoria" 
+          <input
+            type="text"
+            placeholder="Categoria"
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
           />
-          <button type="submit">Cadastrar no Sistema</button>
+          <button type="submit">
+            {editingId ? "Salvar Alterações" : "Cadastrar no Sistema"}
+          </button>
         </form>
       </section>
 
@@ -114,24 +137,39 @@ function App() {
           {items.length === 0 ? (
             <p>Nenhum item detectado no radar.</p>
           ) : (
-            items.map(item => (
+            items.map((item) => (
               <div key={item.id} className="item-card">
                 <h3>{item.nome}</h3>
-                <p>Quantidade: <strong>{item.quantidade}</strong></p>
-                <p>Categoria: <em>{item.categoria}</em></p>
-                <button 
-                  className="delete-btn"
-                  onClick={() => handleDeleteItem(item.id)}
+                <p>
+                  Quantidade: <strong>{item.quantidade}</strong>
+                </p>
+                <p>
+                  Categoria: <em>{item.categoria}</em>
+                </p>
+                <div
+                  style={{ display: "flex", gap: "10px", marginTop: "10px" }}
                 >
-                  Remover
-                </button>
+                  <button
+                    onClick={() => handleEditClick(item)}
+                    style={{ backgroundColor: "#ffa500", flex: 1 }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDeleteItem(item.id)}
+                    style={{ flex: 1 }}
+                  >
+                    Remover
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
       </section>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
